@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmAsyncModuleOptions } from 'src/config/typeorm.config';
+import { UserModule } from './user/user.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -15,6 +16,7 @@ import * as Joi from 'joi';
       }),
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncModuleOptions),
+    UserModule,
   ],
 })
 export class AppModule {}
