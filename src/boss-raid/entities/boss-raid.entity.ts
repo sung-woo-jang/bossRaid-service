@@ -1,9 +1,12 @@
+import { User } from 'src/user/entities/user.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -23,4 +26,7 @@ export class BossRaid extends BaseEntity {
 
   @DeleteDateColumn({ type: 'timestamp' })
   endTime: Date;
+
+  @ManyToOne(() => User, (user) => user.bossRaid)
+  user: User;
 }
