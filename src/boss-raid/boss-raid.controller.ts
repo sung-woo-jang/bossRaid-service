@@ -1,13 +1,25 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { BossRaidService } from './boss-raid.service';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
+import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 
 @Controller('bossRaid')
 export class BossRaidController {
   constructor(private readonly bossRaidService: BossRaidService) {}
 
+  // 보스레이드 현재 상태 응답
+  @Get()
+  getRaidStatus() {
+    return this.bossRaidService.getRaidStatus();
+  }
+
   @Post('enter')
   createBossRaid(@Body() createBossRaidDto: CreateBossRaidDto) {
     return this.bossRaidService.createBossRaid(createBossRaidDto);
+  }
+
+  @Patch('end')
+  updateRaidStatus(@Body() updateBossRaidDto: UpdateBossRaidDto) {
+    return this.bossRaidService.updateRaidStatus(updateBossRaidDto);
   }
 }

@@ -1,4 +1,4 @@
-import { BossRaid } from 'src/boss-raid/entities/boss-raid.entity';
+import { BossRaidRecode } from 'src/boss-raid/entities/boss-raid.entity';
 import {
   BaseEntity,
   Column,
@@ -18,6 +18,6 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @OneToMany(() => BossRaid, (bossRaid) => bossRaid.user)
-  bossRaid: BossRaid;
+  @OneToMany(() => BossRaidRecode, (bossRaid) => bossRaid.user)
+  bossRaid: BossRaidRecode;
 }

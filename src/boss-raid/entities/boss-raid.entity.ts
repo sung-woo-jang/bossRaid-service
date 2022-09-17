@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class BossRaid extends BaseEntity {
+export class BossRaidRecode extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -25,7 +25,7 @@ export class BossRaid extends BaseEntity {
   enterTime: Date;
 
   @DeleteDateColumn({ type: 'timestamp' })
-  endTime: Date;
+  endTime: Date | null;
 
   @ManyToOne(() => User, (user) => user.bossRaid)
   @JoinColumn()
