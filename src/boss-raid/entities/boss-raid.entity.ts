@@ -5,8 +5,8 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -28,5 +28,6 @@ export class BossRaid extends BaseEntity {
   endTime: Date;
 
   @ManyToOne(() => User, (user) => user.bossRaid)
+  @JoinColumn()
   user: User;
 }
