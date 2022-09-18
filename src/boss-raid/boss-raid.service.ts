@@ -4,7 +4,8 @@ import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
-import { BossRaidRecode } from './entities/boss-raid.entity';
+import { BossRaidRecode } from './entities/boss-raid-recode.entity';
+import { BossRaid } from './entities/boss-raid.entity';
 
 @Injectable()
 export class BossRaidService {
@@ -13,6 +14,8 @@ export class BossRaidService {
     private readonly bossRaidRecodeRepository: Repository<BossRaidRecode>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(BossRaid)
+    private readonly bossRaidRepository: Repository<BossRaid>,
   ) {}
 
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
@@ -21,6 +24,11 @@ export class BossRaidService {
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId })
       .getOne();
+
+    // if(보스 레이드를 기록이 없으면 레이드 가능)
+    // else
+
+    // 입장 불가 뜨면 return {isEntered: false}
 
     const raidRecordId = await this.bossRaidRecodeRepository
       .createQueryBuilder('boss_raid')
@@ -31,7 +39,7 @@ export class BossRaidService {
     /*  Todo
         - isEntered 유효성 검사 후 응답값 변경
       */
-
+    //return {	"isEntered": boolean,	"raidRecordId": number}
     return { raidRecordId: raidRecordId.raw[0], isEntered: true };
   }
 
@@ -45,8 +53,14 @@ export class BossRaidService {
     return '';
   }
 
-  async getRaidStatus() {
+  async getBossRaidStatus() {
     // 입장
+
+    // BossRaid DB에서 가장 최신 정보를 꺼냄
+    // 1. 보스레이드를 시작한 기록이 없으면 시작 가능 return
+    /* 2. 보스레이드 기록이 있는 경우
+        - 입장 가능 여부 확인
+     */
 
     // return {canEnter: 입장 가능 여부, enterdUserId: 입장한 유저가 있으면 해당 userId}
     return '';

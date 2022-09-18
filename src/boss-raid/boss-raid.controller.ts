@@ -9,8 +9,8 @@ export class BossRaidController {
 
   // 보스레이드 현재 상태 응답
   @Get()
-  getRaidStatus() {
-    return this.bossRaidService.getRaidStatus();
+  getBossRaidStatus() {
+    return this.bossRaidService.getBossRaidStatus();
   }
 
   @Post('enter')

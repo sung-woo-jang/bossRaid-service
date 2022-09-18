@@ -1,33 +1,19 @@
-import { User } from 'src/user/entities/user.entity';
-import {
-  BaseEntity,
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class BossRaidRecode extends BaseEntity {
+export class BossRaid {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  level: number;
+  canEnter: boolean;
 
-  @Column({ default: 0 })
-  score: number;
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  enteredAt: Date;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  enterTime: Date;
-
-  @DeleteDateColumn({ type: 'timestamp' })
-  endTime: Date | null;
-
-  @ManyToOne(() => User, (user) => user.bossRaid)
-  @JoinColumn()
-  user: User;
+  @Column()
+  userId: number;
 }

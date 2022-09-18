@@ -1,4 +1,4 @@
-import { BossRaidRecode } from 'src/boss-raid/entities/boss-raid.entity';
+import { BossRaidRecode } from 'src/boss-raid/entities/boss-raid-recode.entity';
 import {
   BaseEntity,
   Column,
