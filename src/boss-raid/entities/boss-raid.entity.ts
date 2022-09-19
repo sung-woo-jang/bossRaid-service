@@ -10,10 +10,10 @@ export class BossRaid {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ default: false })
+  @Column({ comment: '입장 가능 여부' })
   canEnter: boolean;
 
-  @CreateDateColumn({
+  @Column({
     type: 'timestamp',
   })
   enteredAt: Date;

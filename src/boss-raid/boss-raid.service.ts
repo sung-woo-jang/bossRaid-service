@@ -10,12 +10,13 @@ import { BossRaid } from './entities/boss-raid.entity';
 @Injectable()
 export class BossRaidService {
   constructor(
-    @InjectRepository(BossRaidRecode)
-    private readonly bossRaidRecodeRepository: Repository<BossRaidRecode>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(BossRaidRecode)
+    private readonly bossRaidRecodeRepository: Repository<BossRaidRecode>,
     @InjectRepository(BossRaid)
     private readonly bossRaidRepository: Repository<BossRaid>,
+    private dataSource: DataSource,
   ) {}
 
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
@@ -25,22 +26,75 @@ export class BossRaidService {
       .where('user.id = :userId', { userId })
       .getOne();
 
-    // if(보스 레이드를 기록이 없으면 레이드 가능)
-    // else
+    if (!user) throw new NotFoundException(`${userId} is not found.`);
 
-    // 입장 불가 뜨면 return {isEntered: false}
-
-    const raidRecordId = await this.bossRaidRecodeRepository
+    let bossRaid = await this.bossRaidRepository
       .createQueryBuilder('boss_raid')
-      .insert()
-      .values({ level, user })
+      .orderBy('boss_raid.enteredAt', 'DESC')
+      .getOne();
+
+    // - 아무도 보스레이드를 시작한 기록이 없다면 시작 가능
+    if (!bossRaid) {
+      bossRaid = (
+        await this.bossRaidRepository
+          .createQueryBuilder()
+          .insert()
+          .into(BossRaid)
+          .values({
+            canEnter: true,
+            userId: user.id,
+          })
+          .execute()
+      ).raw[0];
+    } else {
+      const { canEnter, enteredAt } = bossRaid;
+
+      const {
+        nextEnterTime, //다음 입장 가능 시간
+        currentTime, // 지금 시간
+      } = this.getTimeInfo(enteredAt);
+
+      // 마지막 유저가 보스레이드를 종료했거나, 레이드 제한 시간을 초과했는지 판별
+      if (!(canEnter || currentTime > nextEnterTime))
+        return { isEntered: false };
+    }
+    const currentTime = new Date();
+
+    await this.dataSource
+      .createQueryBuilder()
+      .update(BossRaid)
+      .set({
+        canEnter: false,
+        userId,
+        enteredAt: new Date(currentTime),
+      })
+      .where('id = :id', { id: bossRaid.id })
       .execute();
 
-    /*  Todo
-        - isEntered 유효성 검사 후 응답값 변경
-      */
-    //return {	"isEntered": boolean,	"raidRecordId": number}
-    return { raidRecordId: raidRecordId.raw[0], isEntered: true };
+    // 레이드 기록 생성
+    const raidRecord = await this.bossRaidRecodeRepository
+      .createQueryBuilder()
+      .insert()
+      .into(BossRaidRecode)
+      .values({
+        level,
+        user,
+        enterTime: new Date(currentTime),
+      })
+      .execute();
+
+    return { raidRecord: raidRecord.raw[0].id, isEntered: true };
+  }
+
+  getTimeInfo(lastEnterTime: Date) {
+    // TODO : 3을 변수로 바꾸기
+    const currentTime = new Date();
+
+    const nextEnterTime = new Date(
+      lastEnterTime.setMinutes(lastEnterTime.getMinutes() + 3),
+    );
+
+    return { nextEnterTime, currentTime };
   }
 
   async updateRaidStatus(updateBossRaidDto: UpdateBossRaidDto) {
