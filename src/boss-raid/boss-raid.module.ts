@@ -1,4 +1,5 @@
 import { CacheModule, Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { BossRaidService } from './boss-raid.service';
 import { BossRaidController } from './boss-raid.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,6 +16,7 @@ import * as redisStore from 'cache-manager-ioredis';
       host: 'localhost',
       port: 6379,
     }),
+    HttpModule,
   ],
   controllers: [BossRaidController],
   providers: [BossRaidService],
