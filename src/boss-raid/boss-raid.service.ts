@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import {
+  CACHE_MANAGER,
+  Inject,
   Injectable,
   NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
+import { Cache } from 'cache-manager';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 import { BossRaidRecode } from './entities/boss-raid-recode.entity';
@@ -12,6 +16,7 @@ import { BossRaid } from './entities/boss-raid.entity';
 @Injectable()
 export class BossRaidService {
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(BossRaidRecode)

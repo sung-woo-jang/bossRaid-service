@@ -24,7 +24,7 @@ export class BossRaidRecode extends BaseEntity {
   @CreateDateColumn({ type: 'timestamp' })
   enterTime: Date;
 
-  @DeleteDateColumn({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: null })
   endTime: Date | null;
 
   @ManyToOne(() => User, (user) => user.bossRaid)
