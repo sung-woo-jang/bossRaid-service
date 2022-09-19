@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+  Injectable,
+  NotFoundException,
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 import { BossRaidRecode } from './entities/boss-raid-recode.entity';
@@ -28,6 +30,8 @@ export class BossRaidService {
 
     if (!user) throw new NotFoundException(`${userId} is not found.`);
 
+    // Todo: level 유효성 검사
+
     let bossRaid = await this.bossRaidRepository
       .createQueryBuilder('boss_raid')
       .orderBy('boss_raid.enteredAt', 'DESC')
@@ -52,7 +56,7 @@ export class BossRaidService {
       const {
         nextEnterTime, //다음 입장 가능 시간
         currentTime, // 지금 시간
-      } = this.getTimeInfo(enteredAt);
+      } = this.getEnterTime(enteredAt);
 
       // 마지막 유저가 보스레이드를 종료했거나, 레이드 제한 시간을 초과했는지 판별
       if (!(canEnter || currentTime > nextEnterTime))
@@ -62,6 +66,7 @@ export class BossRaidService {
 
     await this.dataSource
       .createQueryBuilder()
+      .setLock('pessimistic_read')
       .update(BossRaid)
       .set({
         canEnter: false,
@@ -86,8 +91,7 @@ export class BossRaidService {
     return { raidRecord: raidRecord.raw[0].id, isEntered: true };
   }
 
-  getTimeInfo(lastEnterTime: Date) {
-    // TODO : 3을 변수로 바꾸기
+  getEnterTime(lastEnterTime: Date) {
     const currentTime = new Date();
 
     const nextEnterTime = new Date(
@@ -109,14 +113,23 @@ export class BossRaidService {
 
   async getBossRaidStatus() {
     // 입장
+    const bossRaid = await this.bossRaidRepository
+      .createQueryBuilder('boss_raid')
+      .orderBy('boss_raid.enteredAt', 'DESC')
+      .getOne();
 
-    // BossRaid DB에서 가장 최신 정보를 꺼냄
-    // 1. 보스레이드를 시작한 기록이 없으면 시작 가능 return
-    /* 2. 보스레이드 기록이 있는 경우
-        - 입장 가능 여부 확인
-     */
+    // 보스레이드 기록이 없다면 시작 가능.
+    if (!bossRaid) return { canEnter: true };
 
-    // return {canEnter: 입장 가능 여부, enterdUserId: 입장한 유저가 있으면 해당 userId}
-    return '';
+    const { canEnter, enteredAt, userId } = bossRaid;
+
+    const {
+      nextEnterTime, //다음 입장 가능 시간
+      currentTime, // 지금 시간
+    } = this.getEnterTime(enteredAt);
+
+    if (canEnter || currentTime > nextEnterTime) return { canEnter: true };
+
+    return { canEnter: false, enteredUserId: userId };
   }
 }
