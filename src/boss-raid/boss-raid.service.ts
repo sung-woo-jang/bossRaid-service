@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
@@ -12,9 +13,10 @@ import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 import { BossRaidRecode } from './entities/boss-raid-recode.entity';
 import { BossRaid } from './entities/boss-raid.entity';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
-export class BossRaidService {
+export class BossRaidService implements OnModuleInit {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(User)
@@ -24,7 +26,15 @@ export class BossRaidService {
     @InjectRepository(BossRaid)
     private readonly bossRaidRepository: Repository<BossRaid>,
     private dataSource: DataSource,
+    private httpService: HttpService,
   ) {}
+
+  async onModuleInit() {
+    const URL = `https://dmpilf5svl7rv.cloudfront.net/assignment/backend/bossRaidData.json`;
+
+    const staticData = (await this.httpService.axiosRef.get(URL)).data;
+    await this.cacheManager.set('bossRaidsStaticData', staticData.bossRaids[0]);
+  }
 
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
     const { level, userId } = createBossRaidDto;
