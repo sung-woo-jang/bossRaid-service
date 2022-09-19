@@ -14,13 +14,14 @@ import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 import { BossRaidRecode } from './entities/boss-raid-recode.entity';
 import { BossRaid } from './entities/boss-raid.entity';
 import { HttpService } from '@nestjs/axios';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class BossRaidService implements OnModuleInit {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+
+    private readonly userService: UserService,
     @InjectRepository(BossRaidRecode)
     private readonly bossRaidRecodeRepository: Repository<BossRaidRecode>,
     @InjectRepository(BossRaid)
@@ -38,12 +39,7 @@ export class BossRaidService implements OnModuleInit {
 
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
     const { level, userId } = createBossRaidDto;
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :userId', { userId })
-      .getOne();
-
-    if (!user) throw new NotFoundException(`${userId} is not found.`);
+    const user = await this.userService.findUserById(userId);
 
     // Todo: level 유효성 검사
 

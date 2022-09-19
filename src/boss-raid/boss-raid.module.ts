@@ -7,6 +7,7 @@ import { BossRaidRecode } from './entities/boss-raid-recode.entity';
 import { User } from 'src/user/entities/user.entity';
 import { BossRaid } from './entities/boss-raid.entity';
 import * as redisStore from 'cache-manager-ioredis';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import * as redisStore from 'cache-manager-ioredis';
       port: 6379,
     }),
     HttpModule,
+    UserModule,
   ],
   controllers: [BossRaidController],
   providers: [BossRaidService],
