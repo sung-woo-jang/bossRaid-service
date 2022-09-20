@@ -13,7 +13,7 @@ export class BossRaid {
   @Column({ comment: '입장 가능 여부' })
   canEnter: boolean;
 
-  @Column({
+  @CreateDateColumn({
     type: 'timestamp',
   })
   enteredAt: Date;

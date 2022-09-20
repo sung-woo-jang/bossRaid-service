@@ -18,14 +18,12 @@ import * as Joi from 'joi';
       }),
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncModuleOptions),
-    CacheModule.registerAsync({
-      useFactory: async () => ({
-        isGlobal: true,
-        store: redisStore,
-        host: 'localhost',
-        port: '6379',
-        ttl: 0,
-      }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      host: 'localhost',
+      port: 6379,
+      ttl: 0,
     }),
     UserModule,
     BossRaidModule,

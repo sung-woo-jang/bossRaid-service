@@ -1,8 +1,8 @@
 import { PickType } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { BossRaidRecode } from '../entities/boss-raid-recode.entity';
+import { BossRaidRecord } from '../entities/boss-raid-record.entity';
 
-export class CreateBossRaidDto extends PickType(BossRaidRecode, [
+export class CreateBossRaidDto extends PickType(BossRaidRecord, [
   'level',
 ] as const) {
   @IsNumber()

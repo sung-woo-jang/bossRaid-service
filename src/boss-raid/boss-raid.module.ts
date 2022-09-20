@@ -1,22 +1,16 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { BossRaidService } from './boss-raid.service';
 import { BossRaidController } from './boss-raid.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BossRaidRecode } from './entities/boss-raid-recode.entity';
+import { BossRaidRecord } from './entities/boss-raid-record.entity';
 import { User } from 'src/user/entities/user.entity';
 import { BossRaid } from './entities/boss-raid.entity';
-import * as redisStore from 'cache-manager-ioredis';
 import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BossRaidRecode, User, BossRaid]),
-    CacheModule.register({
-      store: redisStore,
-      host: 'localhost',
-      port: 6379,
-    }),
+    TypeOrmModule.forFeature([BossRaidRecord, BossRaid]),
     HttpModule,
     UserModule,
   ],

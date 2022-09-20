@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class BossRaidRecode extends BaseEntity {
+export class BossRaidRecord extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
