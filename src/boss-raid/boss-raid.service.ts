@@ -34,6 +34,13 @@ export interface RankingInfo {
   totalScore: number;
 }
 
+//
+export interface BossRaidStatus {
+  userId: number;
+  canEnter: boolean;
+  enteredAt: Date;
+}
+
 @Injectable()
 export class BossRaidService implements OnModuleInit {
   constructor(
@@ -83,82 +90,54 @@ export class BossRaidService implements OnModuleInit {
 
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
     const { level, userId } = createBossRaidDto;
+
+    // user 유효성 검사
     const user = await this.userService.findUserById(userId);
 
     // Todo: level 유효성 검사
 
-    let bossRaid = await this.bossRaidRepository
-      .createQueryBuilder('boss_raid')
-      .orderBy('boss_raid.enteredAt', 'DESC')
-      .getOne();
+    try {
+      const bossRaidStatus = await this.cacheManager.get<BossRaidStatus>(
+        'bossRaidStatus',
+      );
 
-    // - 아무도 보스레이드를 시작한 기록이 없다면 시작 가능
-    if (!bossRaid) {
-      bossRaid = (
-        await this.bossRaidRepository
-          .createQueryBuilder()
-          .insert()
-          .into(BossRaid)
-          .values({
-            canEnter: true,
-            userId: user.id,
-          })
-          .execute()
-      ).raw[0];
-    } else {
-      const { canEnter, enteredAt } = bossRaid;
+      // - 아무도 보스레이드를 시작한 기록이 없다면 시작 가능
+      const currentTime = new Date();
+      if (!bossRaidStatus) {
+        await this.cacheManager.set('bossRaidStatus', {
+          canEnter: false,
+          userId,
+          enteredAt: currentTime,
+        });
+      } else {
+        const { canEnter, enteredAt } = bossRaidStatus;
 
-      const {
-        nextEnterTime, //다음 입장 가능 시간
-        currentTime, // 지금 시간
-      } = await this.getEnterTime(enteredAt);
+        const {
+          nextEnterTime, //다음 입장 가능 시간
+          currentTime, // 지금 시간
+        } = await this.getEnterTime(enteredAt);
 
-      // 마지막 유저가 보스레이드를 종료했거나, 레이드 제한 시간을 초과했는지 판별
-      if (!(canEnter || currentTime > nextEnterTime))
-        return { isEntered: false };
+        // 마지막 유저가 보스레이드를 종료했거나, 레이드 제한 시간을 초과했는지 판별
+        if (!(canEnter || currentTime < nextEnterTime))
+          return { isEntered: false };
+      }
+
+      // 레이드 기록 생성
+      const raidRecord = await this.bossRaidRecordRepository
+        .createQueryBuilder()
+        .insert()
+        .into(BossRaidRecord)
+        .values({
+          level,
+          user,
+          enterTime: currentTime,
+        })
+        .execute();
+
+      return { raidRecord: raidRecord.raw[0].id, isEntered: true };
+    } catch (err) {
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    const currentTime = new Date();
-
-    await this.dataSource
-      .createQueryBuilder()
-      .setLock('pessimistic_read')
-      .update(BossRaid)
-      .set({
-        canEnter: false,
-        userId,
-        enteredAt: new Date(currentTime),
-      })
-      .where('id = :id', { id: bossRaid.id })
-      .execute();
-
-    // 레이드 기록 생성
-    const raidRecord = await this.bossRaidRecordRepository
-      .createQueryBuilder()
-      .insert()
-      .into(BossRaidRecord)
-      .values({
-        level,
-        user,
-        enterTime: new Date(currentTime),
-      })
-      .execute();
-
-    return { raidRecord: raidRecord.raw[0].id, isEntered: true };
-  }
-
-  async getEnterTime(lastEnterTime: Date) {
-    const currentTime = new Date();
-
-    const { bossRaidLimitSeconds } =
-      await this.cacheManager.get<BossRaidStaticData>('bossRaidStaticData');
-
-    const nextEnterTime = new Date(
-      lastEnterTime.setSeconds(
-        lastEnterTime.getSeconds() + bossRaidLimitSeconds,
-      ),
-    );
-
-    return { nextEnterTime, currentTime };
   }
 
   async updateRaidStatus(updateBossRaidDto: UpdateBossRaidDto) {
@@ -224,27 +203,6 @@ export class BossRaidService implements OnModuleInit {
     await this.cacheManager.set('topRankerInfoList', topRankerInfoList);
   }
 
-  private async calcRanking() {
-    let result = await this.dataSource
-      .getRepository(BossRaidRecord)
-      .createQueryBuilder('boss_raid_record')
-      .select('boss_raid_record.user_id')
-      .addSelect('SUM(boss_raid_record.score)', 'totalScore')
-      .addSelect(
-        'ROW_NUMBER() OVER (ORDER BY SUM(boss_raid_record.score) DESC) -1 as "ranking"',
-      )
-      .groupBy('boss_raid_record.user_id')
-      .getRawMany();
-
-    result = result.map((el) => ({
-      ranking: el.ranking * 1,
-      userId: el.user_id,
-      totalScore: el.totalScore * 1,
-    }));
-
-    return result;
-  }
-
   async getTopRankerList(rankingListDto: RankingListDto) {
     const { userId } = rankingListDto;
     // user 유효성 검사
@@ -288,5 +246,42 @@ export class BossRaidService implements OnModuleInit {
     if (canEnter || currentTime > nextEnterTime) return { canEnter: true };
 
     return { canEnter: false, enteredUserId: userId };
+  }
+
+  private async calcRanking() {
+    let result = await this.dataSource
+      .getRepository(BossRaidRecord)
+      .createQueryBuilder('boss_raid_record')
+      .select('boss_raid_record.user_id')
+      .addSelect('SUM(boss_raid_record.score)', 'totalScore')
+      .addSelect(
+        'ROW_NUMBER() OVER (ORDER BY SUM(boss_raid_record.score) DESC) -1 as "ranking"',
+      )
+      .groupBy('boss_raid_record.user_id')
+      .getRawMany();
+
+    result = result.map((el) => ({
+      ranking: el.ranking * 1,
+      userId: el.user_id,
+      totalScore: el.totalScore * 1,
+    }));
+
+    return result;
+  }
+
+  async getEnterTime(lastEnterTime: Date) {
+    const currentTime = new Date();
+    lastEnterTime = new Date(lastEnterTime);
+
+    const { bossRaidLimitSeconds } =
+      await this.cacheManager.get<BossRaidStaticData>('bossRaidStaticData');
+
+    const nextEnterTime = new Date(
+      lastEnterTime.setSeconds(
+        lastEnterTime.getSeconds() + bossRaidLimitSeconds,
+      ),
+    );
+
+    return { nextEnterTime, currentTime };
   }
 }
