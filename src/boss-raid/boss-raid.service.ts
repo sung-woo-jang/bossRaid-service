@@ -60,6 +60,27 @@ export class BossRaidService implements OnModuleInit {
     }
   }
 
+  /* 
+  redis = {
+    'entered_users': Queue(),
+    'canEnter' : true
+  }
+  cache = redis
+
+  function EnterAPI{
+    const queue = cache.get('entered_users',lock=true)
+    canEnter = queue.length == 0
+    if(canEnter){
+      queue.push(user.id)
+      cache.set('entered_users', queue)
+    }else{
+      return false;
+    }
+
+    return true;
+  }
+  */
+
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
     const { level, userId } = createBossRaidDto;
     const user = await this.userService.findUserById(userId);
