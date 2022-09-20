@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { BossRaidService } from './boss-raid.service';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
+import { RankingListDto } from './dto/ranking-list.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 
 @Controller('bossRaid')
@@ -21,5 +22,10 @@ export class BossRaidController {
   @Patch('end')
   updateRaidStatus(@Body() updateBossRaidDto: UpdateBossRaidDto) {
     return this.bossRaidService.updateRaidStatus(updateBossRaidDto);
+  }
+
+  @Get('topRankerList')
+  getTopRankerList(@Body() rankingListDto: RankingListDto) {
+    return this.bossRaidService.getTopRankerList(rankingListDto);
   }
 }

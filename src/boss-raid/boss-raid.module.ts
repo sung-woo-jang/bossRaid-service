@@ -4,7 +4,6 @@ import { BossRaidService } from './boss-raid.service';
 import { BossRaidController } from './boss-raid.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BossRaidRecord } from './entities/boss-raid-record.entity';
-import { User } from 'src/user/entities/user.entity';
 import { BossRaid } from './entities/boss-raid.entity';
 import { UserModule } from 'src/user/user.module';
 

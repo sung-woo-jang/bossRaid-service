@@ -5,11 +5,9 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { Cache } from 'cache-manager';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
@@ -18,18 +16,22 @@ import { BossRaidRecord } from './entities/boss-raid-record.entity';
 import { BossRaid } from './entities/boss-raid.entity';
 import { HttpService } from '@nestjs/axios';
 import { UserService } from 'src/user/user.service';
+import { RankingListDto } from './dto/ranking-list.dto';
 
-interface Level {
+export interface Level {
   level: number;
   score: number;
 }
 
-interface BossRaidStaticData {
-  // 제한 시간 (sec)
+export interface BossRaidStaticData {
   bossRaidLimitSeconds: number;
-
-  //레벨 별 레이드 처치 점수
   levels: Level[];
+}
+
+export interface RankingInfo {
+  ranking: number; // 랭킹 1위의 ranking 값은 0입니다.
+  userId: number;
+  totalScore: number;
 }
 
 @Injectable()
@@ -195,7 +197,54 @@ export class BossRaidService implements OnModuleInit {
     // 유효성 검사를 전부 통과 했으면
     // 1. 해당 레이드를 종료처리
     // 2. 레이드 level에 따른 score 반영
-    return;
+
+    const topRankerInfoList = await this.calcRanking();
+
+    await this.cacheManager.set('topRankerInfoList', topRankerInfoList);
+  }
+
+  private async calcRanking() {
+    let result = await this.dataSource
+      .getRepository(BossRaidRecord)
+      .createQueryBuilder('boss_raid_record')
+      .select('boss_raid_record.user_id')
+      .addSelect('SUM(boss_raid_record.score)', 'totalScore')
+      .addSelect(
+        'ROW_NUMBER() OVER (ORDER BY SUM(boss_raid_record.score) DESC) -1 as "ranking"',
+      )
+      .groupBy('boss_raid_record.user_id')
+      .getRawMany();
+
+    result = result.map((el) => ({
+      ranking: el.ranking * 1,
+      userId: el.user_id,
+      totalScore: el.totalScore * 1,
+    }));
+
+    return result;
+  }
+
+  async getTopRankerList(rankingListDto: RankingListDto) {
+    const { userId } = rankingListDto;
+    // user 유효성 검사
+    await this.userService.findUserById(userId);
+
+    let topRankerInfoList: RankingInfo[] = await this.cacheManager.get(
+      'topRankerInfoList',
+    );
+
+    // 캐시된 데이터 없을 시 데이터 데이터 생성 및 캐싱
+    if (!topRankerInfoList) {
+      topRankerInfoList = await this.calcRanking();
+      await this.cacheManager.set('topRankerInfoList', topRankerInfoList);
+    }
+
+    const myRankingInfo = topRankerInfoList.find((el) => el.userId === userId);
+
+    return {
+      topRankerInfoList,
+      myRankingInfo,
+    };
   }
 
   async getBossRaidStatus() {
