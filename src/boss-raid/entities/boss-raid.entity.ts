@@ -1,4 +1,4 @@
-import {
+/* import {
   Column,
   CreateDateColumn,
   Entity,
@@ -21,3 +21,4 @@ export class BossRaid {
   @Column()
   userId: number;
 }
+ */

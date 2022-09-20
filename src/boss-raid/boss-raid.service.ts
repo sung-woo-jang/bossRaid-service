@@ -13,7 +13,6 @@ import { Cache } from 'cache-manager';
 import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
 import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
 import { BossRaidRecord } from './entities/boss-raid-record.entity';
-import { BossRaid } from './entities/boss-raid.entity';
 import { HttpService } from '@nestjs/axios';
 import { UserService } from 'src/user/user.service';
 import { RankingListDto } from './dto/ranking-list.dto';
@@ -35,7 +34,7 @@ export interface RankingInfo {
 }
 
 //
-export interface BossRaidStatus {
+export interface BossRaid {
   userId: number;
   canEnter: boolean;
   enteredAt: Date;
@@ -48,8 +47,6 @@ export class BossRaidService implements OnModuleInit {
     private readonly userService: UserService,
     @InjectRepository(BossRaidRecord)
     private readonly bossRaidRecordRepository: Repository<BossRaidRecord>,
-    @InjectRepository(BossRaid)
-    private readonly bossRaidRepository: Repository<BossRaid>,
     private dataSource: DataSource,
     private httpService: HttpService,
   ) {}
@@ -97,14 +94,12 @@ export class BossRaidService implements OnModuleInit {
     // Todo: level 유효성 검사
 
     try {
-      const bossRaidStatus = await this.cacheManager.get<BossRaidStatus>(
-        'bossRaidStatus',
-      );
+      const bossRaidStatus = await this.cacheManager.get<BossRaid>('bossRaid');
 
       // - 아무도 보스레이드를 시작한 기록이 없다면 시작 가능
       const currentTime = new Date();
       if (!bossRaidStatus) {
-        await this.cacheManager.set('bossRaidStatus', {
+        await this.cacheManager.set('bossRaid', {
           canEnter: false,
           userId,
           enteredAt: currentTime,
@@ -118,7 +113,7 @@ export class BossRaidService implements OnModuleInit {
         } = await this.getEnterTime(enteredAt);
 
         // 마지막 유저가 보스레이드를 종료했거나, 레이드 제한 시간을 초과했는지 판별
-        if (!(canEnter || currentTime < nextEnterTime))
+        if (!(canEnter || currentTime > nextEnterTime))
           return { isEntered: false };
       }
 
@@ -146,9 +141,9 @@ export class BossRaidService implements OnModuleInit {
     // 레이드 종료 처리.
     // - 레이드 레벨에 따른 score 반영
     const { id: raidRecordId, userId } = updateBossRaidDto;
+
     let staticData: BossRaidStaticData;
     try {
-      // level에 따른 score 반영을 위해 캐시에서 boss raid static data get
       staticData = await this.cacheManager.get('bossRaidStaticData');
     } catch (err) {
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -184,15 +179,7 @@ export class BossRaidService implements OnModuleInit {
 
     await this.bossRaidRecordRepository.save(record);
 
-    await this.bossRaidRepository
-      .createQueryBuilder('boss_raid')
-      .setLock('pessimistic_read')
-      .update(BossRaid)
-      .set({
-        canEnter: true,
-      })
-      .where('userId = :userId', { userId })
-      .execute();
+    await this.cacheManager.set('bossRaid', { canEnter: true });
 
     // 유효성 검사를 전부 통과 했으면
     // 1. 해당 레이드를 종료처리
@@ -228,10 +215,7 @@ export class BossRaidService implements OnModuleInit {
 
   async getBossRaidStatus() {
     // 입장
-    const bossRaid = await this.bossRaidRepository
-      .createQueryBuilder('boss_raid')
-      .orderBy('boss_raid.enteredAt', 'DESC')
-      .getOne();
+    const bossRaid = await this.cacheManager.get<BossRaid>('bossRaid');
 
     // 보스레이드 기록이 없다면 시작 가능.
     if (!bossRaid) return { canEnter: true };
