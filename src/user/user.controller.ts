@@ -21,3 +21,38 @@ export class UserController {
 }
 */
 }
+
+/* 
+  모델
+    유저
+    보스레이드
+    (랭킹 - redis)
+
+  API
+    유저
+      Create
+        - request
+          - name
+          - mobile
+        - response
+          - 생성된 userId를 응답
+    
+  redis = {
+    'entered_users': Queue(),
+    'canEnter' : true
+  }
+  cache = redis
+
+  function EnterAPI{
+    const queue = cache.get('entered_users',lock=true)
+    canEnter = queue.length == 0
+    if(canEnter){
+      queue.push(user.id)
+      cache.set('entered_users', queue)
+    }else{
+      return false;
+    }
+
+    return true;
+  }
+  */
