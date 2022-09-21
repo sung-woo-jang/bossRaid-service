@@ -5,10 +5,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { createResponseDto } from 'src/common/utils/responseDto.utils';
 import { BossRaidService } from './boss-raid.service';
-import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
-import { RankingListDto } from './dto/ranking-list.dto';
-import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
+import { CreateBossRaidDto } from './dto/request/create-boss-raid.dto';
+import { RankingListDto } from './dto/request/ranking-list.dto';
+import { UpdateBossRaidDto } from './dto/request/update-boss-raid.dto';
+import { CreateBossRaidResponseDto } from './dto/response/boss-raid.response.dto';
 
 @ApiTags('BossRaid API')
 @Controller('bossRaid')
@@ -36,6 +38,7 @@ export class BossRaidController {
   })
   @ApiCreatedResponse({
     description: '보스레이드 입장이 가능하다면 보스레이드를 시작합니다.',
+    type: createResponseDto(CreateBossRaidResponseDto),
   })
   @Post('enter')
   createBossRaid(@Body() createBossRaidDto: CreateBossRaidDto) {

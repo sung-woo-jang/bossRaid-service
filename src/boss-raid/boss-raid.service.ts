@@ -10,12 +10,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Cache } from 'cache-manager';
-import { CreateBossRaidDto } from './dto/create-boss-raid.dto';
-import { UpdateBossRaidDto } from './dto/update-boss-raid.dto';
+import { CreateBossRaidDto } from './dto/request/create-boss-raid.dto';
 import { BossRaidRecord } from './entities/boss-raid-record.entity';
 import { HttpService } from '@nestjs/axios';
 import { UserService } from 'src/user/user.service';
-import { RankingListDto } from './dto/ranking-list.dto';
+import { UpdateBossRaidDto } from './dto/request/update-boss-raid.dto';
+import { RankingListDto } from './dto/request/ranking-list.dto';
 
 export interface Level {
   level: number;
@@ -72,6 +72,7 @@ export class BossRaidService implements OnModuleInit {
     try {
       const bossRaidStatus = await this.cacheManager.get<BossRaid>('bossRaid');
 
+      console.log(bossRaidStatus);
       // - 아무도 보스레이드를 시작한 기록이 없다면 시작 가능
       const currentTime = new Date();
       if (!bossRaidStatus) {
@@ -104,6 +105,12 @@ export class BossRaidService implements OnModuleInit {
           enterTime: currentTime,
         })
         .execute();
+
+      await this.cacheManager.set('bossRaid', {
+        canEnter: false,
+        userId,
+        enteredAt: currentTime,
+      });
 
       return { raidRecord: raidRecord.raw[0].id, isEntered: true };
     } catch (err) {
