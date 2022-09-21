@@ -12,7 +12,7 @@ import {
 export class User extends BaseEntity {
   @ApiProperty({
     example: 1,
-    description: 'id - 자동생성',
+    description: 'User Primary 컬럼',
     required: true,
   })
   @PrimaryGeneratedColumn()
