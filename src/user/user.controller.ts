@@ -12,7 +12,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateBossRaidDto } from 'src/boss-raid/dto/create-boss-raid.dto';
+import { createResponseDto } from 'src/common/utils/responseDto.utils';
+import { CreateUserDto } from './dto/request/create-user.dto';
+import { CreateUserResponseDto } from './dto/response/create-user.response.dto';
+import { FindUserResponseDto } from './dto/response/find-user.response.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User API')
@@ -27,6 +31,7 @@ export class UserController {
   })
   @ApiCreatedResponse({
     description: '유저를 생성합니다.',
+    type: createResponseDto(CreateUserResponseDto),
   })
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
@@ -39,6 +44,7 @@ export class UserController {
   })
   @ApiOkResponse({
     description: '유저를 조회합니다.',
+    type: createResponseDto(FindUserResponseDto),
   })
   @Get(':id')
   findUserWithRaidRecordById(@Param('id', ParseIntPipe) id: number) {
