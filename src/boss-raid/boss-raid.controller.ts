@@ -11,6 +11,7 @@ import { CreateBossRaidDto } from './dto/request/create-boss-raid.dto';
 import { RankingListDto } from './dto/request/ranking-list.dto';
 import { UpdateBossRaidDto } from './dto/request/update-boss-raid.dto';
 import { CreateBossRaidResponseDto } from './dto/response/boss-raid.response.dto';
+import { GetRankerListResponseDto } from './dto/response/get-ranker-list.response.dto';
 
 @ApiTags('BossRaid API')
 @Controller('bossRaid')
@@ -63,6 +64,7 @@ export class BossRaidController {
   })
   @ApiOkResponse({
     description: '보스레이드 totalScore 내림차순으로 랭킹을 조회합니다.',
+    type: createResponseDto(GetRankerListResponseDto),
   })
   @Get('topRankerList')
   getTopRankerList(@Body() rankingListDto: RankingListDto) {
