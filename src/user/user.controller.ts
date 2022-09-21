@@ -12,7 +12,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateBossRaidDto } from 'src/boss-raid/dto/create-boss-raid.dto';
 import { createResponseDto } from 'src/common/utils/responseDto.utils';
 import { CreateUserDto } from './dto/request/create-user.dto';
 import { CreateUserResponseDto } from './dto/response/create-user.response.dto';
