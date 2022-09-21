@@ -64,34 +64,10 @@ export class BossRaidService implements OnModuleInit {
     }
   }
 
-  /* 
-  redis = {
-    'entered_users': Queue(),
-    'canEnter' : true
-  }
-  cache = redis
-
-  function EnterAPI{
-    const queue = cache.get('entered_users',lock=true)
-    canEnter = queue.length == 0
-    if(canEnter){
-      queue.push(user.id)
-      cache.set('entered_users', queue)
-    }else{
-      return false;
-    }
-
-    return true;
-  }
-  */
-
   async createBossRaid(createBossRaidDto: CreateBossRaidDto) {
     const { level, userId } = createBossRaidDto;
 
-    // user 유효성 검사
     const user = await this.userService.findUserById(userId);
-
-    // Todo: level 유효성 검사
 
     try {
       const bossRaidStatus = await this.cacheManager.get<BossRaid>('bossRaid');
@@ -139,7 +115,6 @@ export class BossRaidService implements OnModuleInit {
     const currentTime = new Date();
 
     // 레이드 종료 처리.
-    // - 레이드 레벨에 따른 score 반영
     const { id: raidRecordId, userId } = updateBossRaidDto;
 
     let staticData: BossRaidStaticData;
@@ -150,7 +125,6 @@ export class BossRaidService implements OnModuleInit {
     }
 
     // 유효성 검사
-    // - 저장된 userId와 raidRecordId가 일치하지 않는다면 예외 처리
     const record = await this.bossRaidRecordRepository
       .createQueryBuilder('boss_raid_record')
       .leftJoinAndSelect('boss_raid_record.user', 'user')
@@ -162,8 +136,8 @@ export class BossRaidService implements OnModuleInit {
       throw new HttpException('유효성 검사 실패', HttpStatus.NOT_FOUND);
     if (record.endTime)
       throw new BadRequestException('이미 종료된 레이드 입니다.');
-    // - 시작한 시간으로부터 레이드 제한시간이 지났다면 예외처리
 
+    // - 시작한 시간으로부터 레이드 제한시간이 지났다면 예외처리
     const secondsDiff = Math.floor(
       (currentTime.valueOf() - record.enterTime.valueOf()) / 1000,
     );
@@ -180,10 +154,6 @@ export class BossRaidService implements OnModuleInit {
     await this.bossRaidRecordRepository.save(record);
 
     await this.cacheManager.set('bossRaid', { canEnter: true });
-
-    // 유효성 검사를 전부 통과 했으면
-    // 1. 해당 레이드를 종료처리
-    // 2. 레이드 level에 따른 score 반영
 
     const topRankerInfoList = await this.calcRanking();
 
