@@ -10,8 +10,9 @@ import { BossRaidService } from './boss-raid.service';
 import { CreateBossRaidDto } from './dto/request/create-boss-raid.dto';
 import { RankingListDto } from './dto/request/ranking-list.dto';
 import { UpdateBossRaidDto } from './dto/request/update-boss-raid.dto';
+import { BossRaidStatusResponseDto } from './dto/response/boss-raid-status.response.dto';
 import { CreateBossRaidResponseDto } from './dto/response/boss-raid.response.dto';
-import { GetRankerListResponseDto } from './dto/response/get-ranker-list.response.dto';
+import { GetRankerListResponseDto } from './dto/response/ranker-list.response.dto';
 
 @ApiTags('BossRaid API')
 @Controller('bossRaid')
@@ -22,11 +23,12 @@ export class BossRaidController {
   @ApiOperation({
     summary: '보스레이드 상태 조회 API',
     description:
-      '보스레이드 현재 상태를 응답합니다. (입장 가능 여부, 현재 진행중인 유저가 있다면, 해당 유저의 id)',
+      '보스레이드 현재 상태를 응답합니다. - (입장 가능 여부, 현재 진행중인 유저가 있다면, 해당 유저의 id)',
   })
   @ApiOkResponse({
     description:
-      '보스레이드 현재 상태를 응답합니다. (입장 가능 여부, 현재 진행중인 유저가 있다면, 해당 유저의 id)',
+      '보스레이드 현재 상태를 응답합니다. - (입장 가능 여부, 현재 진행중인 유저가 있다면, 해당 유저의 id)',
+    type: createResponseDto(BossRaidStatusResponseDto),
   })
   @Get()
   getBossRaidStatus() {

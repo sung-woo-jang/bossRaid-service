@@ -15,7 +15,7 @@ import {
 import { createResponseDto } from 'src/common/utils/responseDto.utils';
 import { CreateUserDto } from './dto/request/create-user.dto';
 import { CreateUserResponseDto } from './dto/response/create-user.response.dto';
-import { FindUserResponseDto } from './dto/response/find-user.response.dto';
+import { FindUserResponseDto } from './dto/response/user.response.dto';
 import { UserService } from './user.service';
 
 @ApiTags('User API')
